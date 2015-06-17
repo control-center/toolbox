@@ -168,7 +168,7 @@ def main():
     info.populate(args.all_)
     row_format = "{:>12}" * 4
     print row_format.format("CONTAINER ID", "LOGS", "DISK", "TOTAL")
-    readability = lambda x: x if args.not_human else human_readable
+    readability = (lambda x: x) if args.not_human else human_readable
     for container in info.sorted(operator.attrgetter(args.sort), reverse=args.reverse):
         print row_format.format(container.id, readability(container.log), readability(container.disk), readability(container.total))
 
