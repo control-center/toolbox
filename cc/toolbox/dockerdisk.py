@@ -170,7 +170,7 @@ def main():
     print row_format.format("CONTAINER ID", "LOGS", "DISK", "TOTAL")
     readability = lambda x: x if args.not_human else human_readable
     for container in info.sorted(operator.attrgetter(args.sort), reverse=args.reverse):
-        print row_format.format(container.id, human_readable(container.log), human_readable(container.disk), human_readable(container.total))
+        print row_format.format(container.id, readability(container.log), readability(container.disk), readability(container.total))
 
 
 if __name__ == "__main__":
