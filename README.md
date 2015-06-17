@@ -26,3 +26,13 @@ optional arguments:
 system. In particular, it will report the amount of disk space taken up by
 container logs (stdout/stderr from the container itself) and the amount taken
 up exclusively by the container itself (and not the underlying image).
+
+```dockerdisk``` (currently) only works if Docker is running on BtrFS.
+
+Before ```dockerdisk``` will be able to report on a container's btrfs disk usage, you will need to run:
+
+    ```dockerdisk --initialize```
+
+This will initiate a scan of the filesystem's metadata to determine the sizes
+of each subvolume. During the scan, the sizes reported by ```dockerdisk``` may
+be inaccurate.
