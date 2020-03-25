@@ -9,9 +9,13 @@
 ##############################################################################
 
 import base64
+from datetime import datetime
 import json
+import os
 import re
 import subprocess
+import shutil
+from time import time
 import urllib
 import urllib2
 
@@ -39,10 +43,10 @@ class DockerImage():
 class ElasticsearchDockerImage():
     def __init__(self, d=None):
         self.doc_id = d['_id']
-        self.Library = d['_source']['Library']
-        self.Repo = d['_source']['Repo']
-        self.Tag = d['_source']['Tag']
-        self.UUID = d['_source']['UUID']
+        self.library = d['_source']['Library']
+        self.repo = d['_source']['Repo']
+        self.tag = d['_source']['Tag']
+        self.uuid = d['_source']['UUID']
 
     def __str__(self):
         return "<%s %s>" % (self.__class__.__name__, self.doc_id)
@@ -54,9 +58,11 @@ class ElasticsearchDockerImage():
 class Serviced():
     """ Defines the basic serviced class and attributes. """
     def __init__(self):
-        self.dockerImages = None
-        self.elasticsearchServicedImages = None
-        self.zookeeperImages = None
+        self.isvcs_dir = '/opt/serviced/var/isvcs'
+        self.backup_dir = '/opt/serviced/var/backups'
+        self.timestamp = datetime.fromtimestamp(time()).strftime(
+            '%Y-%m-%d_%H:%M'
+            )
 
     def command(self, cmd=None):
         """ Returns command results. """
@@ -73,7 +79,12 @@ class Serviced():
         return results
 
     def urlRequest(self, url=None, params=None):
-        """ Connect to a URL via urllib2 and return results from query. """
+        """ Connect to a URL via urllib2 and return results from query.
+
+            Keyword arguments:
+            url -- URL to send request(s) (default None)
+            params -- the request parameters (default None)
+        """
         url = url
         self.params = params
         try:
@@ -124,8 +135,10 @@ class Docker(Serviced):
     """
 
     def getDiskUsage(self, images=None):
-        """ Returns disk usage required for saving docker images.
-            @images: list image objects
+        """ Returns disk usage in GB required for saving docker images.
+
+            Keyword arguments:
+            images -- list of image objects (default None)
                 example: images = [<DockerImage 0x7fe68fa4e5a8>]
         """
         if images:
@@ -145,9 +158,16 @@ class Docker(Serviced):
 
     def getImages(self, created_at=None, repo=None, tag=None):
         """ Returns a list of docker image objects.
-            @created_at: string timestamp ex: '2017-09-26 14:55 -0500 CDT'
-            @repo: string repository name ex: 'zenoss/resmgr_6.4'
-            @tag: string docker tag ex: 'latest'
+
+            Keyword arguments:
+            created_at -- string timestamp (default None)
+                example: '2017-09-26 14:55 -0500 CDT'
+
+            repo -- string repository name (default None)
+                example: 'zenoss/resmgr_6.4'
+
+            tag -- string docker tag (default None)
+                example: 'latest'
         """
         cmd = [
             "docker",
@@ -162,6 +182,10 @@ class Docker(Serviced):
                 try:
                     img = json.loads(result.strip('\''))
                     obj = DockerImage(img)
+                    # The list of 'filters' to search for may change,
+                    # adding a condition for each possible combination
+                    # can get very large with each added 'filter'.
+                    # Need a better way to check than the followng.
                     if created_at:
                         if created_at in obj.created_at:
                             images.append(obj)
@@ -193,6 +217,7 @@ class Docker(Serviced):
         """ Returns a tuple with two items.
             The first item is the disk usage of docker images in GB.
             The second item is a list of docker images to save.
+            (default base and latest images)
         """
         images = self.getImages()
         if images:
@@ -218,9 +243,17 @@ class Docker(Serviced):
         return (sizeOfImages, parsed_images)
 
     def saveImages(self, images=None, path='/opt/serviced/var/backups/'):
-        """ Runs the following command for each image:
-                docker save <image> -o <path>
+        """ Runs docker save <image> -o <path>
+
+            Keyword arguments:
+            images -- the list of images to save (default None)
+            path -- full path to save images (default /opt/serviced/var/backups)
         """
+        if not os.path.exists(path) and not os.path.isdir(path):
+            print("Docker.saveImages: unable to save images.")
+            print("Docker.saveImages: Directory: %s doesn't exist." % path)
+            return None
+
         if images:
             for img in images:
                 img = str(img)
@@ -237,9 +270,10 @@ class Docker(Serviced):
                     img_saved = self.command(cmd)[0]
                 except Exception as e:
                     print(e)
-        if img_saved:
-            return img_saved
+            if img_saved:
+                return img_saved
         else:
+            print("Docker.saveImages: No images provided to save.")
             return None
 
 
@@ -248,6 +282,27 @@ class DockerRegistry(Serviced):
        all docker repos and tags. """
     def __init__(self):
         self.url = 'http://localhost:5000/v2'
+
+    def backup(self):
+        """ Backup /opt/serviced/var/isvcs/docker-registry
+            Creates /opt/serviced/var/isvcs/docker-registry_timestamp.bak
+        """
+        serviced = Serviced()
+        dr_path = "%s/docker-registry" % serviced.isvcs_dir
+        backup_dr_path = "%s/docker-registry_%s.bak" % (
+            serviced.isvcs_dir,
+            serviced.timestamp
+            )
+
+        # Create docker-registry backup directory and copy data.
+        if os.path.exists(dr_path) and os.path.isdir(dr_path):
+            if not os.path.exists(backup_dr_path):
+                try:
+                    shutil.copytree(dr_path, backup_dr_path)
+                    return True
+                except Exception as e:
+                    print("Unable to backup docker-registry: %s" % e)
+                    return False
 
     def getRepos(self):
         """ Connects to DockerRegistry, gets list of repositories
@@ -268,7 +323,11 @@ class DockerRegistry(Serviced):
 
     def getTags(self, repos=None):
         """ Connects to DockerRegistry and gets list of tags
-           based on provided repos. """
+            based on provided repos.
+
+            Keyword arguments:
+            repos -- the repositories to get tags from (default None)
+        """
         repos = repos
         image_tags = []
         for repo in repos['repositories']:
@@ -293,14 +352,39 @@ class ElasticsearchServiced(Serviced):
        all elasticsearch documents matching specified params. """
 
     def __init__(self, params=None):
-        """params must be a dictionary of elasticsearch params. """
+        """ Init method for ElasticsearchServiced class.
+
+            Keyword arguments:
+            params -- dictionary of urlRequest parameters (default None)
+        """
         self.url = 'http://localhost:9200/controlplane/imageregistry/_search?'
         self.params = params
 
+    def backup(self):
+        """ Backup /opt/serviced/var/isvcs/elasticsearch-serviced
+            Creates /opt/serviced/var/isvcs/elasticsearch-serviced_timestamp.bak
+        """
+        serviced = Serviced()
+        es_path = "%s/elasticsearch-serviced" % serviced.isvcs_dir
+        backup_es_path = "%s/elasticsearch-serviced_%s.bak" % (
+            serviced.isvcs_dir,
+            serviced.timestamp
+        )
+
+        # Create elasticsearch-serviced backup directory and copy data
+        if os.path.exists(es_path) and os.path.isdir(es_path):
+            if not os.path.exists(backup_es_path):
+                try:
+                    shutil.copytree(es_path, backup_es_path)
+                    return True
+                except Exception as e:
+                    print("Unable to bacup elasticsearch-serviced: %s" % e)
+                    return False
+
     def getImageTagCount(self):
-        params = {"size": 1}
+        self.params = {"size": 1}
         try:
-            results = self.urlRequest(self.url, params)
+            results = self.urlRequest(self.url, self.params)
             elastic_documents = json.loads(results)
             total = elastic_documents['hits']['total']
             return total
@@ -354,9 +438,9 @@ class ElasticsearchServiced(Serviced):
             try:
                 for doc in docs:
                     parsed_docs.append("%s/%s:%s" % (
-                        doc.Library,
-                        doc.Repo,
-                        doc.Tag))
+                        doc.library,
+                        doc.repo,
+                        doc.tag))
             except Exception as e:
                 print("Exception parsing docs: %s" % e)
             parsed_docs.sort()
