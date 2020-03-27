@@ -156,20 +156,8 @@ class Docker(Serviced):
     def getImageCount(self):
         return len(self.getImages())
 
-    def getImages(self, id=None, created_at=None, repo=None, tag=None):
+    def getImages(self):
         """ Returns a list of docker image objects.
-
-            Keyword arguments:
-            id -- docker image id (default None)
-
-            created_at -- string timestamp (default None)
-                example: '2017-09-26 14:55 -0500 CDT'
-
-            repo -- string repository name (default None)
-                example: 'zenoss/resmgr_6.4'
-
-            tag -- string docker tag (default None)
-                example: 'latest'
         """
         cmd = [
             "docker",
@@ -178,19 +166,13 @@ class Docker(Serviced):
             "'{{json .}}'"
             ]
         images = []
-        args = [id, created_at, repo, tag]
-        filters = [arg for arg in args if arg]
         results = self.command(cmd)
         for result in results[0].split('\n'):
             if result:
                 try:
                     img = json.loads(result.strip('\''))
                     obj = DockerImage(img)
-                    if any(f for f in filters):
-                        if all(f in str(img) for f in filters):
-                            images.append(obj)
-                    else:
-                        images.append(obj)
+                    images.append(obj)
                 except Exception as e:
                     print("%s" % e)
 
