@@ -57,12 +57,12 @@ class ElasticsearchDockerImage():
 
 class Serviced():
     """ Defines the basic serviced class and attributes. """
-    def __init__(self):
-        self.isvcs_dir = '/opt/serviced/var/isvcs'
-        self.backup_dir = '/opt/serviced/var/backups'
-        self.timestamp = datetime.fromtimestamp(time()).strftime(
-            '%Y-%m-%d_%H:%M'
-            )
+
+    isvcs_dir = '/opt/serviced/var/isvcs'
+    backup_dir = '/opt/serviced/var/backups'
+    timestamp = datetime.fromtimestamp(time()).strftime(
+        '%Y-%m-%d_%H:%M'
+        )
 
     def command(self, cmd=None):
         """ Returns command results. """
@@ -73,9 +73,8 @@ class Serviced():
                 stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE)
             results = request.communicate()
-        except Exception as e:
-            print("Command.run: %s" % e)
-            results = None
+        except Exception:
+            raise
         return results
 
     def urlRequest(self, url=None, params=None):
@@ -98,8 +97,8 @@ class Serviced():
                     request = urllib2.urlopen(url)
             else:
                 print("Serviced.urlRequest: No url or params specified.")
-        except Exception as e:
-            print("Serviced.urlRequest Exception: %s" % e)
+        except Exception:
+            raise
 
         if request:
             status = request.code
@@ -121,11 +120,19 @@ class Serviced():
             "snapshot",
             "list"
         ]
+
         results = self.command(cmd)
-        if 'no snapshots found' in results[1]:
-            snapshots = None
-        elif results[0]:
-            snapshots = results[0].split()
+
+        if results:
+            if results[0]:
+                snapshots = results[0].split()
+            else:
+                if 'no snapshots found' in results[1]:
+                    snapshots = []
+                else:
+                    print(results[1])
+                    snapshots = None
+
         return snapshots
 
 
@@ -259,11 +266,10 @@ class DockerRegistry(Serviced):
         """ Backup /opt/serviced/var/isvcs/docker-registry
             Creates /opt/serviced/var/isvcs/docker-registry_timestamp.bak
         """
-        serviced = Serviced()
-        dr_path = "%s/docker-registry" % serviced.isvcs_dir
+        dr_path = "%s/docker-registry" % self.isvcs_dir
         backup_dr_path = "%s/docker-registry_%s.bak" % (
-            serviced.isvcs_dir,
-            serviced.timestamp
+            self.isvcs_dir,
+            self.timestamp
             )
 
         # Create docker-registry backup directory and copy data.
@@ -336,11 +342,10 @@ class ElasticsearchServiced(Serviced):
         """ Backup /opt/serviced/var/isvcs/elasticsearch-serviced
             Creates /opt/serviced/var/isvcs/elasticsearch-serviced_timestamp.bak
         """
-        serviced = Serviced()
-        es_path = "%s/elasticsearch-serviced" % serviced.isvcs_dir
+        es_path = "%s/elasticsearch-serviced" % self.isvcs_dir
         backup_es_path = "%s/elasticsearch-serviced_%s.bak" % (
-            serviced.isvcs_dir,
-            serviced.timestamp
+            self.isvcs_dir,
+            self.timestamp
         )
 
         # Create elasticsearch-serviced backup directory and copy data
