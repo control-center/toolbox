@@ -369,6 +369,18 @@ class ElasticsearchServiced(Serviced):
                     print("Unable to bacup elasticsearch-serviced: %s" % e)
                     return False
 
+    def cleanUp(self):
+        ir_url = 'http://localhost:9200/controlplane/imageregistry/'
+        params = {'get_method': 'DELETE'}
+        images = self.getImages()
+        if images:
+            serviced = Serviced()
+            for img in images:
+                if 'latest' not in img.tag:
+                    url = "%s%s" % (ir_url, img.doc_id)
+                    results = serviced.urlRequest(url, params)
+                    print("Successfully removed: %s" % json.loads(results))
+
     def getImageTagCount(self):
         self.params = {"size": 1}
         try:
