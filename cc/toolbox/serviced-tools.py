@@ -87,23 +87,34 @@ class Serviced():
         url = url
         self.params = params
         try:
-            if url:
-                if self.params:
-                    request = urllib2.urlopen("%s%s" % (
+            
+            if url and self.params:
+                if self.params.has_key('get_method'):
+                    if self.params.get('get_method') == 'DELETE':
+                        opener = urllib2.build_opener(urllib2.HTTPHandler)
+                        request = urllib2.Request(url)
+                        request.get_method = lambda: 'DELETE'
+                        response = opener.open(request)
+                else:
+                    opener = urllib2.build_opener(urllib2.HTTPHandler)
+                    request = urllib2.Request("%s%s" % (
                         url,
                         urllib.urlencode(params)
                         ))
-                else:
-                    request = urllib2.urlopen(url)
+                    response = opener.open(request)
+            elif url and not self.params:
+                opener = urllib2.build_opener(urllib2.HTTPHandler)
+                request = urllib2.Request(url)
+                response = opener.open(request)
             else:
                 print("Serviced.urlRequest: No url or params specified.")
         except Exception:
             raise
 
-        if request:
-            status = request.code
+        if response:
+            status = response.code
             if status == 200:
-                results = request.read()
+                results = response.readlines()[0]
                 return results
             elif status != 200:
                 print("Serviced.urlRequest Error: %s" % status)
@@ -299,14 +310,14 @@ class DockerRegistry(Serviced):
         """ Returns the count of Docker Registry tags."""
         return len(self.getTags(self.getRepos()))
 
-    def getTags(self, repos=None):
+    def getTags(self):
         """ Connects to DockerRegistry and gets list of tags
             based on provided repos.
 
             Keyword arguments:
             repos -- the repositories to get tags from (default None)
         """
-        repos = repos
+        repos = self.getRepos()
         image_tags = []
         for repo in repos['repositories']:
             results = self.urlRequest("%s/%s/tags/list" % (
