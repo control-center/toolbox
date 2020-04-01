@@ -36,3 +36,15 @@ Before ```dockerdisk``` will be able to report on a container's btrfs disk usage
 This will initiate a scan of the filesystem's metadata to determine the sizes
 of each subvolume. During the scan, the sizes reported by ```dockerdisk``` may
 be inaccurate.
+
+## serviced-toolbox
+
+```
+$ python serviced-tools.py --help
+usage: serviced-tools.py [-h] [-i] [-c]
+
+optional arguments:
+  -h, --help        show this help message and exit
+  -i, --imagecount  Displays Image (tag) counts
+  -c, --cleanup     Removes unused elasticsearch-serviced image tags.
+```
