@@ -36,3 +36,15 @@ Before ```dockerdisk``` will be able to report on a container's btrfs disk usage
 This will initiate a scan of the filesystem's metadata to determine the sizes
 of each subvolume. During the scan, the sizes reported by ```dockerdisk``` may
 be inaccurate.
+
+## serviced-toolbox
+
+To count image tags
+```
+$ serviced-tool tags count
+```
+
+To remove unused image tags
+```
+$ serviced-tool tags clean
+```
