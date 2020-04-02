@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 #
 # Copyright (C) Zenoss, Inc. 2020, all rights reserved.
@@ -7,12 +6,16 @@
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
+
+from __future__ import absolute_import, print_function
+
 import argparse
-from Docker import Docker
-from DockerRegistry import DockerRegistry
-from ElasticsearchServiced import ElasticsearchServiced
-from Serviced import Serviced
-from Zookeeper import Zookeeper
+
+from .docker import Docker
+from .dockerregistry import DockerRegistry
+from .elasticsearchserviced import ElasticsearchServiced
+from .serviced import Serviced
+from .zookeeper import Zookeeper
 
 
 docker = Docker()
@@ -20,24 +23,6 @@ dr = DockerRegistry()
 es = ElasticsearchServiced()
 serviced = Serviced()
 zk = Zookeeper()
-
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i",
-        "--imagecount",
-        help="Displays Image (tag) counts",
-        action="store_true"
-        )
-    parser.add_argument(
-        "-c",
-        "--cleanup",
-        help="Removes unused elasticsearch-serviced image tags.",
-        action="store_true"
-    )
-    args = parser.parse_args()
-    return args
 
 
 def cleanUp():
@@ -68,9 +53,26 @@ def getCounts():
     print("Zookeeper Images: %d" % zk_images)
 
 
-if __name__ == '__main__':
-    opts = get_args()
-    if opts.imagecount:
-        getCounts()
-    if opts.cleanup:
-        cleanUp()
+def process_args():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    tags = subparsers.add_parser("tags", help="Manage image tags")
+    tags_subparsers = tags.add_subparsers()
+
+    tags_count = tags_subparsers.add_parser(
+        "count", help="Displays image tag count",
+    )
+    tags_count.set_defaults(func=getCounts)
+
+    tags_clean = tags_subparsers.add_parser(
+        "clean", help="Remove unused image tags",
+    )
+    tags_clean.set_defaults(func=cleanUp)
+
+    args = parser.parse_args()
+    args.func()
+
+
+def main():
+    process_args()

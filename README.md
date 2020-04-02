@@ -39,12 +39,12 @@ be inaccurate.
 
 ## serviced-toolbox
 
+To count image tags
 ```
-$ python serviced-tools.py --help
-usage: serviced-tools.py [-h] [-i] [-c]
+$ serviced-tool tags count
+```
 
-optional arguments:
-  -h, --help        show this help message and exit
-  -i, --imagecount  Displays Image (tag) counts
-  -c, --cleanup     Removes unused elasticsearch-serviced image tags.
+To remove unused image tags
+```
+$ serviced-tool tags clean
 ```

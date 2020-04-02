@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 #
 # Copyright (C) Zenoss, Inc. 2020, all rights reserved.
@@ -7,16 +6,22 @@
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
+
+from __future__ import absolute_import, print_function
+
 import json
-from Serviced import Serviced
+import os
 import shutil
+
+from .serviced import Serviced
 
 
 class DockerRegistry(Serviced):
     """ Connects to docker-registry on localhost:5000 and returns
        all docker repos and tags. """
+
     def __init__(self):
-        self.url = 'http://localhost:5000/v2'
+        self.url = "http://localhost:5000/v2"
 
     def backup(self):
         """ Backup /opt/serviced/var/isvcs/docker-registry
@@ -25,8 +30,8 @@ class DockerRegistry(Serviced):
         dr_path = "%s/docker-registry" % self.isvcs_dir
         backup_dr_path = "%s/docker-registry_%s.bak" % (
             self.isvcs_dir,
-            self.timestamp
-            )
+            self.timestamp,
+        )
 
         # Create docker-registry backup directory and copy data.
         if os.path.exists(dr_path) and os.path.isdir(dr_path):
@@ -41,10 +46,7 @@ class DockerRegistry(Serviced):
     def getRepos(self):
         """ Connects to DockerRegistry, gets list of repositories
            and lists tags for each repository. """
-        results = self.urlRequest("%s/%s" % (
-            self.url,
-            '_catalog'
-        ))
+        results = self.urlRequest("%s/%s" % (self.url, "_catalog"))
         if results:
             repos = json.loads(results)
         else:
@@ -64,17 +66,12 @@ class DockerRegistry(Serviced):
         """
         repos = self.getRepos()
         image_tags = []
-        for repo in repos['repositories']:
-            results = self.urlRequest("%s/%s/tags/list" % (
-                self.url,
-                repo
-            ))
+        for repo in repos["repositories"]:
+            results = self.urlRequest("%s/%s/tags/list" % (self.url, repo))
             if results:
                 tags = json.loads(results)
-                for tag in tags['tags']:
-                    image_tag = "%s:%s" % (
-                        tags['name'],
-                        tag)
+                for tag in tags["tags"]:
+                    image_tag = "%s:%s" % (tags["name"], tag)
                     if image_tag:
                         image_tags.append(image_tag)
                 image_tags.sort()

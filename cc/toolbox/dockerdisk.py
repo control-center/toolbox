@@ -1,27 +1,26 @@
 #!/usr/bin/env python
 
-import sys
-import glob
 import argparse
+import glob
+import operator
 import os.path
 import subprocess
-import operator
+import sys
 
-
-DEVNULL = open(os.devnull, 'w')
+DEVNULL = open(os.devnull, "w")
 
 
 def fail(msg):
-    print >>sys.stderr, msg
+    print >> sys.stderr, msg
     sys.exit(1)
 
 
-def human_readable(num, suffix='B'):
-    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+def human_readable(num, suffix="B"):
+    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
-    return "%.1f%s%s" % (num, 'Yi', suffix)
+    return "%.1f%s%s" % (num, "Yi", suffix)
 
 
 def under_docker(*args):
@@ -41,6 +40,7 @@ class Container(object):
     """
     Represents a Docker container.
     """
+
     def __init__(self, id_):
         self._id = id_
         self.subvol_id = None
@@ -87,14 +87,14 @@ class Container(object):
 
 
 class ContainerInfo(object):
-
     def __init__(self):
         self._containers = {}
         self._containers_by_subvol = {}
 
     def _populate_containers(self, historical=False):
         """
-        Looks up Docker container ids and populates our internal map with Container objects.
+        Looks up Docker container ids and populates our internal map with
+        Container objects.
         """
         cmd = ["docker", "ps", "--no-trunc", "-q"]
         if historical:
@@ -112,7 +112,9 @@ class ContainerInfo(object):
         Populates Containers in our internal map with subvolume ids.
         """
         try:
-            info = btrfs("subvolume", "list", under_docker("btrfs", "subvolumes"))
+            info = btrfs(
+                "subvolume", "list", under_docker("btrfs", "subvolumes")
+            )
         except subprocess.CalledProcessError:
             fail("Unable to retrieve btrfs subvolume info.")
         for line in info.splitlines():
@@ -124,9 +126,11 @@ class ContainerInfo(object):
 
     def _populate_qgroup_sizes(self):
         try:
-            for line in btrfs("qgroup", "show", under_docker("btrfs", "subvolumes")).splitlines():
+            for line in btrfs(
+                "qgroup", "show", under_docker("btrfs", "subvolumes")
+            ).splitlines():
                 args = [x for x in line.split() if x]
-                subvol_id = args[0].split('/')[-1]
+                subvol_id = args[0].split("/")[-1]
                 container = self._containers_by_subvol.get(subvol_id)
                 if container is not None:
                     container.btrfs_total = int(args[1])
@@ -140,17 +144,47 @@ class ContainerInfo(object):
         self._populate_qgroup_sizes()
 
     def sorted(self, sortfunc, reverse=False):
-        return sorted(self._containers.itervalues(), key=sortfunc, reverse=reverse)
+        return sorted(
+            self._containers.itervalues(), key=sortfunc, reverse=reverse
+        )
 
 
 def get_args():
-    parser = argparse.ArgumentParser("Print the disk usage of individual containers", add_help=False)
-    parser.add_argument("-a", "--all", action="store_true", help="Show all Docker containers, rather than just running ones", dest="all_")
-    parser.add_argument("-h", "--human", dest="not_human", action="store_false", help="Print sizes in human readable format")
-    parser.add_argument("--sort", choices=["id", "log", "disk", "total"], help="Value to sort by", default="total")
-    parser.add_argument("-r", "--reverse", action="store_true", help="Sort results in descending order")
-    parser.add_argument("--initialize", action="store_true",
-            help="Initialize Docker's btrfs volume to report sizes and begin a scan (note: scan may take a few minutes)")
+    parser = argparse.ArgumentParser(
+        "Print the disk usage of individual containers", add_help=False
+    )
+    parser.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        help="Show all Docker containers, rather than just running ones",
+        dest="all_",
+    )
+    parser.add_argument(
+        "-h",
+        "--human",
+        dest="not_human",
+        action="store_false",
+        help="Print sizes in human readable format",
+    )
+    parser.add_argument(
+        "--sort",
+        choices=["id", "log", "disk", "total"],
+        help="Value to sort by",
+        default="total",
+    )
+    parser.add_argument(
+        "-r",
+        "--reverse",
+        action="store_true",
+        help="Sort results in descending order",
+    )
+    parser.add_argument(
+        "--initialize",
+        action="store_true",
+        help="Initialize Docker's btrfs volume to report sizes and "
+        "begin a scan (note: scan may take a few minutes)",
+    )
     parser.add_argument("--help", action="store_true", help="Print usage")
     args = parser.parse_args()
     if args.help:
@@ -169,8 +203,15 @@ def main():
     row_format = "{:>12}" * 4
     print row_format.format("CONTAINER ID", "LOGS", "DISK", "TOTAL")
     readability = (lambda x: x) if args.not_human else human_readable
-    for container in info.sorted(operator.attrgetter(args.sort), reverse=args.reverse):
-        print row_format.format(container.id, readability(container.log), readability(container.disk), readability(container.total))
+    for container in info.sorted(
+        operator.attrgetter(args.sort), reverse=args.reverse
+    ):
+        print row_format.format(
+            container.id,
+            readability(container.log),
+            readability(container.disk),
+            readability(container.total),
+        )
 
 
 if __name__ == "__main__":
