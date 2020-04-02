@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 #
 # Copyright (C) Zenoss, Inc. 2020, all rights reserved.
@@ -7,11 +6,17 @@
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
+
+from __future__ import absolute_import, print_function
+
 import json
-from Serviced import Serviced
+import os
 import shutil
 
-class ElasticsearchDockerImage():
+from .serviced import Serviced
+
+
+class ElasticsearchDockerImage(object):
     def __init__(self, d=None):
         self.doc_id = d['_id']
         self.library = d['_source']['Library']
@@ -40,8 +45,9 @@ class ElasticsearchServiced(Serviced):
         self.params = params
 
     def backup(self):
-        """ Backup /opt/serviced/var/isvcs/elasticsearch-serviced
-            Creates /opt/serviced/var/isvcs/elasticsearch-serviced_timestamp.bak
+        """
+        Backup /opt/serviced/var/isvcs/elasticsearch-serviced
+        Creates /opt/serviced/var/isvcs/elasticsearch-serviced_timestamp.bak
         """
         es_path = "%s/elasticsearch-serviced" % self.isvcs_dir
         backup_es_path = "%s/elasticsearch-serviced_%s.bak" % (

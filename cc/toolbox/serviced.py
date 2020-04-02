@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 #
 # Copyright (C) Zenoss, Inc. 2020, all rights reserved.
@@ -7,30 +6,31 @@
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
-from datetime import datetime
+
+from __future__ import absolute_import, print_function
+
 import subprocess
-from time import time
 import urllib
 import urllib2
 
+from datetime import datetime
+from time import time
 
-class Serviced():
-    """ Defines the basic serviced class and attributes. """
 
-    isvcs_dir = '/opt/serviced/var/isvcs'
-    backup_dir = '/opt/serviced/var/backups'
-    timestamp = datetime.fromtimestamp(time()).strftime(
-        '%Y-%m-%d_%H:%M'
-        )
+class Serviced(object):
+    """Defines the basic serviced class and attributes."""
+
+    isvcs_dir = "/opt/serviced/var/isvcs"
+    backup_dir = "/opt/serviced/var/backups"
+    timestamp = datetime.fromtimestamp(time()).strftime("%Y-%m-%d_%H:%M")
 
     def command(self, cmd=None):
         """ Returns command results. """
         try:
             self.cmd = cmd
             request = subprocess.Popen(
-                self.cmd,
-                stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE)
+                self.cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            )
             results = request.communicate()
         except Exception:
             raise
@@ -46,20 +46,19 @@ class Serviced():
         url = url
         self.params = params
         try:
-            
+
             if url and self.params:
-                if self.params.has_key('get_method'):
-                    if self.params.get('get_method') == 'DELETE':
+                if "get_method" in self.params:
+                    if self.params.get("get_method") == "DELETE":
                         opener = urllib2.build_opener(urllib2.HTTPHandler)
                         request = urllib2.Request(url)
-                        request.get_method = lambda: 'DELETE'
+                        request.get_method = lambda: "DELETE"
                         response = opener.open(request)
                 else:
                     opener = urllib2.build_opener(urllib2.HTTPHandler)
-                    request = urllib2.Request("%s%s" % (
-                        url,
-                        urllib.urlencode(params)
-                        ))
+                    request = urllib2.Request(
+                        "%s%s" % (url, urllib.urlencode(params))
+                    )
                     response = opener.open(request)
             elif url and not self.params:
                 opener = urllib2.build_opener(urllib2.HTTPHandler)
@@ -85,11 +84,7 @@ class Serviced():
         """ Returns list of snapshots.
             Returns None if there aren't any snapshots.
         """
-        cmd = [
-            "serviced",
-            "snapshot",
-            "list"
-        ]
+        cmd = ["serviced", "snapshot", "list"]
 
         results = self.command(cmd)
 
@@ -97,7 +92,7 @@ class Serviced():
             if results[0]:
                 snapshots = results[0].split()
             else:
-                if 'no snapshots found' in results[1]:
+                if "no snapshots found" in results[1]:
                     snapshots = []
                 else:
                     print(results[1])
