@@ -34,6 +34,7 @@ class Zookeeper(Serviced):
 
         zk_output = self.command(cmd)[0]
 
+        total = 0
         for line in zk_output.split("\n"):
             if "numChildren =" in line:
                 total = int(line.split()[2])
