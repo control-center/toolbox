@@ -6,9 +6,6 @@
 # License.zenoss under the directory where your Zenoss product is installed.
 #
 ##############################################################################
-
-
-
 import base64
 from kazoo.client import KazooClient
 import logging
