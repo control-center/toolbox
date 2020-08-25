@@ -7,11 +7,11 @@
 #
 ##############################################################################
 
-from __future__ import absolute_import, print_function
+
 
 import subprocess
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 from datetime import datetime
 from time import time
@@ -50,19 +50,19 @@ class Serviced(object):
             if url and self.params:
                 if "get_method" in self.params:
                     if self.params.get("get_method") == "DELETE":
-                        opener = urllib2.build_opener(urllib2.HTTPHandler)
-                        request = urllib2.Request(url)
+                        opener = urllib.request.build_opener(urllib.request.HTTPHandler)
+                        request = urllib.request.Request(url)
                         request.get_method = lambda: "DELETE"
                         response = opener.open(request)
                 else:
-                    opener = urllib2.build_opener(urllib2.HTTPHandler)
-                    request = urllib2.Request(
-                        "%s%s" % (url, urllib.urlencode(params))
+                    opener = urllib.request.build_opener(urllib.request.HTTPHandler)
+                    request = urllib.request.Request(
+                        "%s%s" % (url, urllib.parse.urlencode(params))
                     )
                     response = opener.open(request)
             elif url and not self.params:
-                opener = urllib2.build_opener(urllib2.HTTPHandler)
-                request = urllib2.Request(url)
+                opener = urllib.request.build_opener(urllib.request.HTTPHandler)
+                request = urllib.request.Request(url)
                 response = opener.open(request)
             else:
                 print("Serviced.urlRequest: No url or params specified.")

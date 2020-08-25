@@ -7,7 +7,7 @@
 #
 ##############################################################################
 
-from __future__ import absolute_import, print_function
+
 
 import base64
 from kazoo.client import KazooClient
@@ -19,8 +19,7 @@ logging.basicConfig(
     filemode='a',
     format='%(asctime)s %(name)s %(levelname)s %(message)s'
 )
-
-log = logging.getLogger('serviced-tool')
+log = logging.getLogger('serviced-tool.Zookeeper')
 
 
 class Zookeeper():
@@ -30,7 +29,7 @@ class Zookeeper():
                 sasl_options=None, read_only=None, randomize_hosts=True,
                 connection_retry=None, logger=None, keyfile=None,
                 keyfile_password=None, certfile=None, ca=None, use_ssl=False,
-                verify_certs=True, **kwargs,
+                verify_certs=True, **kwargs
         ):
         """ Establish connection to zk node(s) using provided options. """
         try:

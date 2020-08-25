@@ -1,13 +1,16 @@
 import unittest
-from unittest.mock import MagicMock
-from cc.toolbox.zookeeper import Zookeeper
+try:
+    from unittest.mock import MagicMock
+except Exception:
+    from mock import MagicMock
+from ..zookeeper import Zookeeper
 
 
-class TestZookeeper(unittest.TestCase):
+class TestZookeeper(unittest.TestCase, Zookeeper):
 
     def setUp(self):
         self.zk = Zookeeper()
-        self.zk.zk_connected = MagicMock(return_value=True)
+        self.zk_connected = MagicMock(return_value=True)
         self.zk.getDockerTagCount = MagicMock(return_value={"count": 20})
         self.zk.getDockerTags = MagicMock(return_value={
             "zk_tags": [
@@ -33,9 +36,12 @@ class TestZookeeper(unittest.TestCase):
                 b'cmn7pwgr105nkvlfospy45o1a/resmgr_6.3:20190629-040102.330'
                 ]})
 
+    def tearDown(self):
+        self.zk.disconnect()
+
     def test_init(self):
         self.assertIsInstance(self.zk, Zookeeper)
-        self.assertTrue(self.zk.zk_connected)
+        self.assertTrue(self.zk_connected)
 
     def test_getDockerTagCount(self):
         self.tag_count = self.zk.getDockerTagCount()
