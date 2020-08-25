@@ -51,3 +51,6 @@ class TestZookeeper(unittest.TestCase, Zookeeper):
         self.tags = self.zk.getDockerTags()
         self.assertIsInstance(self.tags['zk_tags'], list)
         self.assertGreaterEqual(len(self.tags['zk_tags']), 0)
+
+
+suite = unittest.TestLoader().loadTestsFromTestCase(TestZookeeper)

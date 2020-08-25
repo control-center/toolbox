@@ -21,13 +21,13 @@ log = logging.getLogger('serviced-tool.Zookeeper')
 
 class Zookeeper():
     """Uses Serviced.command to connect to isvcs-zookeeper and list tags."""
+
     def __init__(self, hosts='127.0.0.1:2181', timeout=10.0, client_id=None,
                 handler=None, default_acl=None, auth_data=None,
                 sasl_options=None, read_only=None, randomize_hosts=True,
                 connection_retry=None, logger=None, keyfile=None,
                 keyfile_password=None, certfile=None, ca=None, use_ssl=False,
-                verify_certs=True, **kwargs
-        ):
+                verify_certs=True, **kwargs):
         """ Establish connection to zk node(s) using provided options. """
         try:
             self.zk = KazooClient(hosts)
