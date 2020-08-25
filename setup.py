@@ -17,7 +17,9 @@ setup(
     namespace_packages=["cc"],
     include_package_data=True,
     zip_safe=False,
-    install_requires=["setuptools"],
+    install_requires=[
+        "setuptools",
+        "kazoo"],
     entry_points={
         "console_scripts": [
             "dockerdisk=cc.toolbox.dockerdisk:main",

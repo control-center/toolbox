@@ -2,7 +2,7 @@
 
 Tools for operating and debugging Zenoss Control Center
 
-## dockerdisk
+## !Deprecated: dockerdisk
 
 ```
 dockerdisk: Print the disk usage of individual containers [-a] [-h]

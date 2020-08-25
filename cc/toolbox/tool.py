@@ -44,7 +44,7 @@ def getCounts():
     dr_images = dr.getTagCount()
     es_images = es.getImageTagCount()
     serviced_snapshots = serviced.getSnapshots()
-    zk_images = zk.getDockerTagCount()
+    zk_images = zk.getDockerTagCount()["count"]
 
     print("Docker Images: %d" % docker_images)
     print("Docker Registry Images: %d" % dr_images)
