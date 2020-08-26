@@ -7,7 +7,7 @@
 #
 ##############################################################################
 
-
+from __future__ import absolute_import, print_function
 
 import argparse
 
@@ -44,7 +44,7 @@ def getCounts():
     dr_images = dr.getTagCount()
     es_images = es.getImageTagCount()
     serviced_snapshots = serviced.getSnapshots()
-    zk_images = zk.getDockerTagCount()["count"]
+    zk_images = zk.getDockerTagCount()
 
     print("Docker Images: %d" % docker_images)
     print("Docker Registry Images: %d" % dr_images)
