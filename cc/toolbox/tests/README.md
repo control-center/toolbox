@@ -5,7 +5,7 @@ Tests are written using unittest.mock(python3), but will also run on python2 wit
 #### Requirements for running tests
 
  * Docker Engine - Community
- * zenoss/isvcs-zookeeper:v11 docker image running.
+ * docker container running with the zenoss/isvcs-zookeeper:v11 docker image.
  
 ##### isvcs-zookeeper docker run options:
 
