@@ -9,7 +9,7 @@ To count image tags
 $ serviced-tool tags count
 ```
 
-To remove unused image tags
+To remove unused elasticsearch-serviced image tags
 ```
 $ serviced-tool tags clean
 ```
